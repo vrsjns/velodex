@@ -1,0 +1,8 @@
+#flatlib
+#openai
+requests
+python-dotenv
+#pika
+boto3
+selenium
+webdriver-manager

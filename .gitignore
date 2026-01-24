@@ -1,0 +1,5 @@
+.env
+.venv/
+uci_riders.json
+localstack-data/
+__pycache__/

@@ -1,0 +1,39 @@
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=0
+    volumes:
+      - "./localstack-init:/etc/localstack/init/ready.d"
+      - "localstack-data:/var/lib/localstack"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  scraper:
+    build: .
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=eu-central-1
+      - S3_BUCKET_NAME=velo-horoscope-01
+      - S3_ENDPOINT_URL=http://localstack:4566
+      - SCRAPER_MAX_WORKERS=8
+      - SCRAPER_REQUEST_DELAY=0.3
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    profiles:
+      - run
+
+volumes:
+  localstack-data:
