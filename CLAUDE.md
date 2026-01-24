@@ -9,13 +9,13 @@ This is a UCI (Union Cycliste Internationale) rider data scraper that extracts p
 ## Local Development Setup
 
 ```bash
-# One-time setup: create venv and install dependencies
+# One-time setup: create venv, install dependencies, and install Playwright browser
 ./setup-local.sh
 
 # Activate virtual environment
 source .venv/bin/activate
 
-# Run the scraper (requires Chrome installed locally)
+# Run the scraper
 python create-riders-list.py
 ```
 
@@ -45,14 +45,14 @@ docker run --env-file .env riders-list
 ## Architecture
 
 Single-script application (`create-riders-list.py`) that:
-1. Uses Selenium with headless Chrome to scrape UCI rider pages (161 pages total)
+1. Uses Playwright with async/await for concurrent scraping of UCI rider pages
 2. Extracts rider name, nationality, birth date, and sanctions status
 3. Saves data locally to `uci_riders.json`
 4. Uploads the JSON file to an S3 bucket
 
 ## Dependencies
 
-- **selenium** / **webdriver-manager**: Web scraping with Chrome
+- **playwright**: Async web scraping with Chromium
 - **boto3**: AWS S3 uploads
 - **python-dotenv**: Environment variable loading
 
@@ -65,3 +65,5 @@ Required:
 
 Optional:
 - `S3_ENDPOINT_URL` - Set to `http://localhost:4566` for LocalStack
+- `SCRAPER_MAX_CONCURRENT` - Number of concurrent requests (default: 20)
+- `SCRAPER_REQUEST_DELAY` - Delay between requests in seconds (default: 0.1)

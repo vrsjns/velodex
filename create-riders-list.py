@@ -1,15 +1,13 @@
-import json, os, time, re, logging, sys
-import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
+import os
+import re
+import logging
+import sys
+import asyncio
+
 import boto3
 from dotenv import load_dotenv
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from playwright.async_api import async_playwright, Browser, BrowserContext
 
 # Configure logging
 logging.basicConfig(
@@ -24,244 +22,199 @@ load_dotenv()
 logger.info("Environment variables loaded")
 
 # Configuration from environment
-MAX_WORKERS = int(os.getenv("SCRAPER_MAX_WORKERS", "8"))
-REQUEST_DELAY = float(os.getenv("SCRAPER_REQUEST_DELAY", "0.3"))
+MAX_CONCURRENT = int(os.getenv("SCRAPER_MAX_CONCURRENT", "20"))
+REQUEST_DELAY = float(os.getenv("SCRAPER_REQUEST_DELAY", "0.1"))
 MAX_RETRIES = 3
 
-# Thread-local storage for WebDriver instances
-thread_local = threading.local()
 
-# Lock for thread-safe logging of progress
-progress_lock = threading.Lock()
-completed_count = 0
-
-
-def create_chrome_driver():
-    """Create and configure a Chrome WebDriver instance."""
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=options
-    )
-    return driver
+async def create_browser():
+    """Launch a single browser instance."""
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    return browser, playwright
 
 
-def get_worker_driver():
-    """Get or create a thread-local WebDriver instance."""
-    if not hasattr(thread_local, 'driver'):
-        thread_local.driver = create_chrome_driver()
-    return thread_local.driver
-
-
-def cleanup_worker_driver():
-    """Clean up the thread-local WebDriver if it exists."""
-    if hasattr(thread_local, 'driver'):
-        try:
-            thread_local.driver.quit()
-        except Exception:
-            pass
-        delattr(thread_local, 'driver')
-
-
-def get_total_pages(driver, base_url):
-    """
-    Detect total number of pages from UCI pagination.
-    Navigates to the first page and extracts the last page number from the pager.
-    """
+async def get_total_pages(browser: Browser, base_url: str) -> int:
+    """Detect total pages from pagination."""
     logger.info("Detecting total number of pages...")
-    first_page_url = base_url.format(page=1)
-    driver.get(first_page_url)
-
-    # Wait for rider list to load (indicates page is ready)
-    WebDriverWait(driver, 15).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.riders-list__item-container'))
-    )
-    logger.info("Rider list loaded, looking for pagination...")
-
-    # Wait for pager and find the last page link
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, '.pager__item--last-page a'))
-    )
-
-    last_page_link = driver.find_element(By.CSS_SELECTOR, '.pager__item--last-page a')
-    href = last_page_link.get_attribute('href')
-    # Extract page number from href like "/riders/...?page=132"
-    max_page = int(href.split('page=')[-1].split('&')[0])
-
-    logger.info(f"Detected {max_page} total pages")
-    return max_page
-
-
-def collect_page_urls(page, base_url, delay=REQUEST_DELAY):
-    """
-    Collect rider URLs from a single page.
-    Uses thread-local driver for parallel execution.
-    """
-    driver = get_worker_driver()
-    url = base_url.format(page=page)
+    context = await browser.new_context()
+    page = await context.new_page()
 
     try:
-        driver.get(url)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.riders-list__item-container'))
-        )
+        await page.goto(base_url.format(page=1))
+        await page.wait_for_selector('.riders-list__item-container', timeout=15000)
+        logger.info("Rider list loaded, looking for pagination...")
 
-        rider_cards = driver.find_elements(By.CSS_SELECTOR, '.riders-list__item-container')
-        page_urls = [card.get_attribute("href") for card in rider_cards if card.get_attribute("href")]
+        await page.wait_for_selector('.pager__item--last-page a', timeout=10000)
 
-        if delay > 0:
-            time.sleep(delay)
+        href = await page.get_attribute('.pager__item--last-page a', 'href')
+        max_page = int(href.split('page=')[-1].split('&')[0])
 
-        return {"success": True, "page": page, "urls": page_urls}
-    except Exception as e:
-        return {"success": False, "page": page, "urls": [], "error": str(e)}
+        logger.info(f"Detected {max_page} total pages")
+        return max_page
+    finally:
+        await context.close()
 
 
-def parallel_collect_urls(base_url, total_pages, max_workers=MAX_WORKERS, delay=REQUEST_DELAY):
-    """
-    Phase 1: Collect rider URLs from all pages in parallel.
-    Each worker maintains its own Chrome instance via thread-local storage.
-    """
-    logger.info(f"Phase 1: Collecting rider URLs from {total_pages} pages with {max_workers} workers...")
+BASE_DOMAIN = "https://www.uci.org"
 
+
+async def collect_page_urls(
+    context: BrowserContext,
+    page_num: int,
+    base_url: str,
+    semaphore: asyncio.Semaphore
+) -> dict:
+    """Collect rider URLs from a single page."""
+    async with semaphore:
+        page = await context.new_page()
+        try:
+            await page.goto(base_url.format(page=page_num))
+            await page.wait_for_selector('.riders-list__item-container', timeout=10000)
+
+            cards = await page.query_selector_all('.riders-list__item-container')
+            urls = []
+            for card in cards:
+                url = await card.get_attribute('href')
+                if url:
+                    # Convert relative URLs to absolute
+                    if url.startswith('/'):
+                        url = BASE_DOMAIN + url
+                    urls.append(url)
+
+            return {"success": True, "page": page_num, "urls": urls}
+        except Exception as e:
+            return {"success": False, "page": page_num, "urls": [], "error": str(e)}
+        finally:
+            await page.close()
+
+
+async def collect_all_urls(
+    browser: Browser,
+    base_url: str,
+    total_pages: int,
+    max_concurrent: int
+) -> list:
+    """Phase 1: Collect all URLs concurrently."""
+    logger.info(f"Phase 1: Collecting URLs from {total_pages} pages ({max_concurrent} concurrent)...")
+
+    semaphore = asyncio.Semaphore(max_concurrent)
+    context = await browser.new_context()
+
+    tasks = [
+        collect_page_urls(context, p, base_url, semaphore)
+        for p in range(1, total_pages + 1)
+    ]
+
+    completed = 0
     all_urls = []
     errors = []
-    pages_completed = 0
 
-    def worker_task(page):
-        nonlocal pages_completed
-        result = collect_page_urls(page, base_url, delay)
+    for coro in asyncio.as_completed(tasks):
+        result = await coro
+        completed += 1
+        if completed % 20 == 0 or completed == total_pages:
+            logger.info(f"  Progress: {completed}/{total_pages} pages processed")
 
-        with progress_lock:
-            pages_completed += 1
-            if pages_completed % 20 == 0 or pages_completed == total_pages:
-                logger.info(f"  Progress: {pages_completed}/{total_pages} pages processed")
+        if result["success"]:
+            all_urls.extend(result["urls"])
+        else:
+            errors.append({"page": result["page"], "error": result.get("error", "Unknown")})
 
-        return result
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(worker_task, page): page for page in range(1, total_pages + 1)}
-
-        for future in as_completed(futures):
-            page = futures[future]
-            try:
-                result = future.result()
-                if result["success"]:
-                    all_urls.extend(result["urls"])
-                else:
-                    errors.append({"page": result["page"], "error": result.get("error", "Unknown")})
-            except Exception as e:
-                errors.append({"page": page, "error": str(e)})
+    await context.close()
 
     if errors:
         logger.warning(f"Failed to collect URLs from {len(errors)} pages")
 
-    logger.info(f"Phase 1 complete: collected {len(all_urls)} rider URLs")
+    logger.info(f"Phase 1 complete: {len(all_urls)} URLs collected")
     return all_urls
 
 
-def scrape_rider_profile(url, delay=REQUEST_DELAY):
-    """
-    Scrape a single rider profile page.
-    Uses thread-local driver and implements retry logic.
-    """
-    global completed_count
+async def scrape_profile(
+    context: BrowserContext,
+    url: str,
+    semaphore: asyncio.Semaphore,
+    delay: float
+) -> dict:
+    """Scrape a single rider profile with retry logic."""
+    async with semaphore:
+        page = await context.new_page()
+        last_error = None
 
-    driver = get_worker_driver()
-    last_error = None
-
-    for attempt in range(MAX_RETRIES):
         try:
-            driver.get(url)
+            for attempt in range(MAX_RETRIES):
+                try:
+                    await page.goto(url)
+                    await page.wait_for_selector('.rider-details__name', timeout=10000)
 
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, '.rider-details__name'))
-            )
+                    name = await page.inner_text('.rider-details__name')
+                    values = await page.query_selector_all('.rider-details__footer-item__value')
 
-            name_element = driver.find_element(By.CSS_SELECTOR, '.rider-details__name')
-            parent_element = driver.find_element(By.CSS_SELECTOR, '.rider-details__footer')
-            nationality_element = parent_element.find_element(By.XPATH, "(//div[@class='rider-details__footer-item__value'])[1][1]")
-            dob_element = parent_element.find_element(By.XPATH, "(//div[@class='rider-details__footer-item__value'])[2][1]")
-            sanctions_element = parent_element.find_element(By.XPATH, "(//div[@class='rider-details__footer-item__value'])[3][1]")
+                    nationality = await values[0].inner_text() if len(values) > 0 else ""
+                    dob = await values[1].inner_text() if len(values) > 1 else ""
+                    sanctions = await values[2].inner_text() if len(values) > 2 else ""
 
-            name = re.sub(r"\s+", " ", name_element.text.strip())
-            nationality = re.sub(r"\s+", " ", nationality_element.text.strip())
-            dob = re.sub(r"\s+", " ", dob_element.text.strip())
-            sanctions = re.sub(r"\s+", " ", sanctions_element.text.strip())
+                    rider_data = {
+                        "name": re.sub(r"\s+", " ", name.strip()),
+                        "birth_date": re.sub(r"\s+", " ", dob.strip()),
+                        "nationality": re.sub(r"\s+", " ", nationality.strip()),
+                        "sanctions": re.sub(r"\s+", " ", sanctions.strip()),
+                    }
 
-            rider_data = {
-                "name": name,
-                "birth_date": dob,
-                "nationality": nationality,
-                "sanctions": sanctions
-            }
+                    if delay > 0:
+                        await asyncio.sleep(delay)
 
-            # Politeness delay
-            if delay > 0:
-                time.sleep(delay)
+                    return {"success": True, "data": rider_data, "url": url}
 
-            return {"success": True, "data": rider_data, "url": url}
+                except Exception as e:
+                    last_error = e
+                    if attempt < MAX_RETRIES - 1:
+                        wait_time = (2 ** attempt) * 0.5
+                        await asyncio.sleep(wait_time)
+                    continue
 
-        except Exception as e:
-            last_error = e
-            if attempt < MAX_RETRIES - 1:
-                # Exponential backoff
-                wait_time = (2 ** attempt) * 0.5
-                time.sleep(wait_time)
-            continue
-
-    return {"success": False, "error": str(last_error), "url": url}
+            return {"success": False, "error": str(last_error), "url": url}
+        finally:
+            await page.close()
 
 
-def parallel_scrape_profiles(urls, max_workers=MAX_WORKERS, delay=REQUEST_DELAY):
-    """
-    Phase 2: Scrape rider profiles in parallel using ThreadPoolExecutor.
-    Each worker maintains its own Chrome instance via thread-local storage.
-    """
-    global completed_count
-    completed_count = 0
+async def scrape_all_profiles(
+    browser: Browser,
+    urls: list,
+    max_concurrent: int,
+    delay: float
+) -> tuple:
+    """Phase 2: Scrape all profiles concurrently."""
+    logger.info(f"Phase 2: Scraping {len(urls)} profiles ({max_concurrent} concurrent)...")
 
-    total_urls = len(urls)
-    logger.info(f"Phase 2: Starting parallel scrape with {max_workers} workers for {total_urls} profiles...")
+    semaphore = asyncio.Semaphore(max_concurrent)
+    context = await browser.new_context()
+
+    tasks = [scrape_profile(context, url, semaphore, delay) for url in urls]
 
     results = []
     errors = []
+    completed = 0
+    total_urls = len(urls)
 
-    def worker_task(url):
-        global completed_count
-        result = scrape_rider_profile(url, delay)
+    for coro in asyncio.as_completed(tasks):
+        result = await coro
+        completed += 1
+        if completed % 100 == 0 or completed == total_urls:
+            logger.info(f"  Progress: {completed}/{total_urls} profiles scraped")
 
-        with progress_lock:
-            completed_count += 1
-            if completed_count % 100 == 0 or completed_count == total_urls:
-                logger.info(f"  Progress: {completed_count}/{total_urls} profiles scraped")
+        if result["success"]:
+            results.append(result["data"])
+        else:
+            errors.append(result)
 
-        return result
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(worker_task, url): url for url in urls}
-
-        for future in as_completed(futures):
-            url = futures[future]
-            try:
-                result = future.result()
-                if result["success"]:
-                    results.append(result["data"])
-                else:
-                    errors.append({"url": result["url"], "error": result["error"]})
-            except Exception as e:
-                errors.append({"url": url, "error": str(e)})
+    await context.close()
 
     logger.info(f"Phase 2 complete: {len(results)} successful, {len(errors)} errors")
 
     if errors:
         logger.warning(f"Failed URLs ({len(errors)}):")
-        for err in errors[:10]:  # Show first 10 errors
+        for err in errors[:10]:
             logger.warning(f"  {err['url']}: {err['error']}")
         if len(errors) > 10:
             logger.warning(f"  ... and {len(errors) - 10} more")
@@ -269,36 +222,24 @@ def parallel_scrape_profiles(urls, max_workers=MAX_WORKERS, delay=REQUEST_DELAY)
     return results, errors
 
 
-def main():
-    """Main entry point for the scraper."""
-    logger.info(f"Starting UCI rider scraper (workers: {MAX_WORKERS}, delay: {REQUEST_DELAY}s)")
+async def async_main():
+    """Async entry point."""
+    logger.info(f"Starting UCI rider scraper (concurrent: {MAX_CONCURRENT}, delay: {REQUEST_DELAY}s)")
 
-    # Main UCI riders page
-    main_url = 'https://www.uci.org/riders/road-riders-teams/4uEfOErsvL4hkRJriqkdiw?tab=riders-list-riders&page={page}'
+    base_url = 'https://www.uci.org/riders/road-riders-teams/4uEfOErsvL4hkRJriqkdiw?tab=riders-list-riders&page={page}'
 
-    # Create driver to detect total pages
-    logger.info("Configuring Chrome options...")
-    logger.info("Installing/locating ChromeDriver...")
-    main_driver = create_chrome_driver()
-    logger.info("ChromeDriver initialized successfully")
+    browser, playwright = await create_browser()
+    logger.info("Browser initialized successfully")
 
     try:
-        # Get total pages
-        total_pages = get_total_pages(main_driver, main_url)
-
-        # Close driver before parallel phases
-        main_driver.quit()
-        main_driver = None
-
-        # Phase 1: Parallel URL collection
-        all_urls = parallel_collect_urls(main_url, total_pages, MAX_WORKERS, REQUEST_DELAY)
+        total_pages = await get_total_pages(browser, base_url)
+        all_urls = await collect_all_urls(browser, base_url, total_pages, MAX_CONCURRENT)
 
         if not all_urls:
-            logger.error("No rider URLs collected. Exiting.")
+            logger.error("No URLs collected. Exiting.")
             return
 
-        # Phase 2: Parallel profile scraping
-        riders_data, errors = parallel_scrape_profiles(all_urls, MAX_WORKERS, REQUEST_DELAY)
+        riders_data, errors = await scrape_all_profiles(browser, all_urls, MAX_CONCURRENT, REQUEST_DELAY)
 
         logger.info(f"Scraping complete. Total riders: {len(riders_data)}, Errors: {len(errors)}")
 
@@ -334,10 +275,14 @@ def main():
             logger.error(f"Failed to upload to S3: {e}")
 
     finally:
-        # Clean up main driver if still open
-        if main_driver:
-            main_driver.quit()
+        await browser.close()
+        await playwright.stop()
         logger.info("Done")
+
+
+def main():
+    """Main entry point."""
+    asyncio.run(async_main())
 
 
 if __name__ == "__main__":

@@ -26,12 +26,12 @@ services:
       - AWS_REGION=eu-central-1
       - S3_BUCKET_NAME=velo-horoscope-01
       - S3_ENDPOINT_URL=http://localstack:4566
-      - SCRAPER_MAX_WORKERS=8
-      - SCRAPER_REQUEST_DELAY=0.3
+      - SCRAPER_MAX_CONCURRENT=20
+      - SCRAPER_REQUEST_DELAY=0.1
     deploy:
       resources:
         limits:
-          memory: 8G
+          memory: 2G
     profiles:
       - run
 

@@ -8,6 +8,9 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Install Playwright browsers
+playwright install chromium
+
 echo ""
 echo "Setup complete! To activate the environment:"
 echo "  source .venv/bin/activate"
