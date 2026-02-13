@@ -15,10 +15,28 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=velostrology
+      - POSTGRES_PASSWORD=velostrology
+      - POSTGRES_DB=velostrology
+    volumes:
+      - "postgres-data:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U velostrology"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   scraper:
     build: .
     depends_on:
       localstack:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     environment:
       - AWS_ACCESS_KEY_ID=test
@@ -28,6 +46,7 @@ services:
       - S3_ENDPOINT_URL=http://localstack:4566
       - SCRAPER_MAX_CONCURRENT=20
       - SCRAPER_REQUEST_DELAY=0.1
+      - DB_URL=postgresql://velostrology:velostrology@postgres:5432/velostrology
     deploy:
       resources:
         limits:
@@ -37,3 +56,4 @@ services:
 
 volumes:
   localstack-data:
+  postgres-data:
