@@ -60,7 +60,7 @@ Entry point: `riders/__main__.py` orchestrates all phases (`python -m riders`).
 
 - `riders_scraped` — SCD2 history table (tracks every change per rider)
 - `riders_overrides` — Manual corrections and enrichment data
-- `riders_current` — View merging scraped + overrides (export-ready)
+- `riders_current` — View merging scraped + overrides (export-ready); excludes riders with `scraped_at` older than 7 days (staleness filter for removed riders)
 
 Migrations managed by yoyo-migrations in `migrations/`.
 
