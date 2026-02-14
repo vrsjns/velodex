@@ -9,7 +9,7 @@ from yoyo import read_migrations, get_backend
 
 logger = logging.getLogger(__name__)
 
-MIGRATIONS_DIR = str(Path(__file__).parent / "migrations")
+MIGRATIONS_DIR = str(Path(__file__).parent.parent / "migrations")
 
 
 def get_db_url() -> str:

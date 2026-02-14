@@ -19,7 +19,7 @@ source .venv/bin/activate
 docker-compose up -d
 
 # Run the scraper
-python create-riders-list.py
+python -m riders
 ```
 
 ## Docker Testing with LocalStack
@@ -49,12 +49,12 @@ docker run --env-file .env riders-list
 
 Multi-module application with 4 phases:
 
-1. **Scrape** (`scraper.py`) — Playwright async scraping of UCI rider pages
-2. **Upsert** (`db.py`) — SCD2 change tracking in PostgreSQL
-3. **Export** (`db.py`) — Merged view (scraped + overrides) to JSON
-4. **Upload** (`s3.py`) — JSON file to S3
+1. **Scrape** (`riders/scraper.py`) — Playwright async scraping of UCI rider pages
+2. **Upsert** (`riders/db.py`) — SCD2 change tracking in PostgreSQL
+3. **Export** (`riders/db.py`) — Merged view (scraped + overrides) to JSON
+4. **Upload** (`riders/s3.py`) — JSON file to S3
 
-Entry point: `create-riders-list.py` orchestrates all phases.
+Entry point: `riders/__main__.py` orchestrates all phases (`python -m riders`).
 
 ### Database Schema
 

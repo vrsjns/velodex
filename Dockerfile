@@ -35,4 +35,4 @@ RUN playwright install chromium
 COPY . .
 
 # Set default command
-CMD ["python", "create-riders-list.py"]
+CMD ["python", "-m", "riders"]
