@@ -6,9 +6,9 @@ import asyncio
 
 from dotenv import load_dotenv
 
-from riders.scraper import run_scraper
-from riders.db import run_migrations, connect, upsert_riders, export_merged
-from riders.s3 import upload_to_s3
+from velodex.scraper import run_scraper
+from velodex.db import run_migrations, connect, upsert_riders, export_merged
+from velodex.s3 import upload_to_s3
 
 # Configure logging
 logging.basicConfig(

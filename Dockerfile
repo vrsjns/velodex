@@ -35,4 +35,4 @@ RUN playwright install chromium
 COPY . .
 
 # Set default command
-CMD ["python", "-m", "riders"]
+CMD ["python", "-m", "velodex"]

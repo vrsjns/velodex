@@ -19,7 +19,7 @@ source .venv/bin/activate
 docker-compose up -d
 
 # Run the scraper
-python -m riders
+python -m velodex
 ```
 
 ## Docker Testing with LocalStack
@@ -39,22 +39,22 @@ aws --endpoint-url=http://localhost:4566 s3 ls
 
 ```bash
 # Build Docker image
-docker build -t riders-list .
+docker build -t velodex .
 
 # Run in Docker with real AWS
-docker run --env-file .env riders-list
+docker run --env-file .env velodex
 ```
 
 ## Architecture
 
 Multi-module application with 4 phases:
 
-1. **Scrape** (`riders/scraper.py`) — Playwright async scraping of UCI rider pages
-2. **Upsert** (`riders/db.py`) — SCD2 change tracking in PostgreSQL
-3. **Export** (`riders/db.py`) — Merged view (scraped + overrides) to JSON
-4. **Upload** (`riders/s3.py`) — JSON file to S3
+1. **Scrape** (`velodex/scraper.py`) — Playwright async scraping of UCI rider pages
+2. **Upsert** (`velodex/db.py`) — SCD2 change tracking in PostgreSQL
+3. **Export** (`velodex/db.py`) — Merged view (scraped + overrides) to JSON
+4. **Upload** (`velodex/s3.py`) — JSON file to S3
 
-Entry point: `riders/__main__.py` orchestrates all phases (`python -m riders`).
+Entry point: `velodex/__main__.py` orchestrates all phases (`python -m velodex`).
 
 ### Database Schema
 
