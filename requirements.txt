@@ -4,5 +4,6 @@ requests
 python-dotenv
 #pika
 boto3
-selenium
-webdriver-manager
+playwright
+psycopg[binary]
+yoyo-migrations

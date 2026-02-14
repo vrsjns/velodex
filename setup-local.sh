@@ -8,12 +8,15 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Install Playwright browsers
+playwright install chromium
+
 echo ""
 echo "Setup complete! To activate the environment:"
 echo "  source .venv/bin/activate"
 echo ""
-echo "To start LocalStack:"
+echo "To start PostgreSQL and LocalStack:"
 echo "  docker-compose up -d"
 echo ""
-echo "To run the script:"
-echo "  python create-riders-list.py"
+echo "To run the scraper:"
+echo "  python -m riders"
