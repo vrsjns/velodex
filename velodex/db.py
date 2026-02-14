@@ -69,10 +69,6 @@ def upsert_riders(conn, riders: list[dict], source: str = "uci"):
         else:
             updated_rows.append((source, url, rider, h))
 
-    logger.info(
-        f"SCD2 upsert: {len(new_rows)} new, {len(bumped_keys)} unchanged, {len(updated_rows)} changed"
-    )
-
     with conn.cursor() as cur:
         # Batch INSERT new riders
         if new_rows:
@@ -114,8 +110,18 @@ def upsert_riders(conn, riders: list[dict], source: str = "uci"):
                 ],
             )
 
+    # Count stale rows (current but not seen for 7+ days)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM riders_scraped WHERE is_current AND scraped_at <= now() - INTERVAL '7 days'"
+        )
+        stale_count = cur.fetchone()[0]
+
     conn.commit()
-    logger.info("SCD2 upsert committed")
+    logger.info(
+        f"SCD2 upsert: {len(new_rows)} new, {len(bumped_keys)} unchanged, "
+        f"{len(updated_rows)} changed, {stale_count} stale"
+    )
 
 
 def export_merged(conn) -> list[dict]:
