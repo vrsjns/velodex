@@ -1,0 +1,27 @@
+[MESSAGES CONTROL]
+disable=
+    # Docstrings not required — FastAPI endpoints are self-documenting via OpenAPI
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    # f-strings in logging are readable and acceptable in modern Python
+    logging-fstring-interpolation,
+    # Scraper intentionally catches all exceptions to prevent one bad record
+    # from aborting the whole pipeline
+    broad-exception-caught,
+    # psycopg3 is a C extension; pylint cannot resolve its connection/cursor
+    # members at static analysis time
+    no-member,
+
+[FORMAT]
+# 100 is too tight for FastAPI route decorators with multiple keyword args
+max-line-length=120
+
+[DESIGN]
+# db.py export function legitimately needs more than 15 locals
+max-locals=20
+
+[TYPECHECK]
+# Allow pylint to load the psycopg C extension so it can resolve
+# connection/cursor member types correctly
+extension-pkg-allow-list=psycopg
