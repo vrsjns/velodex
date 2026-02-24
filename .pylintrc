@@ -9,6 +9,8 @@ disable=
     # Scraper intentionally catches all exceptions to prevent one bad record
     # from aborting the whole pipeline
     broad-exception-caught,
+    # Pydantic models are data containers and don't need public methods
+    too-few-public-methods,
     # psycopg3 is a C extension; pylint cannot resolve its connection/cursor
     # members at static analysis time
     no-member,
