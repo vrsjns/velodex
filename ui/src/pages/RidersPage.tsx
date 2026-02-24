@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchRiders } from "../api";
 import type { Rider } from "../types";
-import { btnPrimary, btnSecondary, muted } from "../styles";
+import { btnPrimary, btnSecondary, muted, pageTitle } from "../styles";
 
 const th = "bg-gray-100 font-semibold px-3 py-2 border border-border text-sm text-left";
-const td = "px-3 py-2 border border-border text-sm";
+const td = "px-3 py-3 border border-border text-sm";
 
 export default function RidersPage(): React.JSX.Element {
   const [riders, setRiders] = useState<Rider[]>([]);
@@ -32,7 +32,7 @@ export default function RidersPage(): React.JSX.Element {
 
   return (
     <>
-      <h1 className="mt-0">Riders</h1>
+      <h1 className={pageTitle}>Riders</h1>
       <form className="flex gap-2 max-w-xs mb-4" onSubmit={handleSubmit}>
         <input
           type="text"
@@ -86,7 +86,7 @@ export default function RidersPage(): React.JSX.Element {
                       <span className={muted}>manual</span>
                     )}
                   </td>
-                  <td className={`${td} group-hover:bg-gray-50 whitespace-nowrap`}>
+                  <td className={`${td} group-hover:bg-blue-50 whitespace-nowrap`}>
                     {r.source_url && (
                       <Link
                         className={btnSecondary}

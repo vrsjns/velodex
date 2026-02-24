@@ -3,7 +3,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { fetchUsers, updateUser, deleteUser } from "../api";
 import { useAuth } from "../context/AuthContext";
 import type { AdminUser } from "../types";
-import { input, btnPrimary, btnSecondary, btnDanger, btnSm, formGroup, label, muted, errorText, successText } from "../styles";
+import { input, btnPrimary, btnSecondary, btnDanger, btnSm, formGroup, label, muted, errorText, successText, pageTitle } from "../styles";
 
 const th = "bg-gray-100 font-semibold px-3 py-2 border border-border text-sm text-left";
 const td = "px-3 py-2 border border-border text-sm";
@@ -97,7 +97,7 @@ export default function UsersPage(): React.JSX.Element {
 
   return (
     <>
-      <h1 className="mt-0">Users</h1>
+      <h1 className={pageTitle}>Users</h1>
       {error && <p className={errorText}>{error}</p>}
       <table className="w-full border-collapse bg-surface rounded-md shadow-sm overflow-hidden">
         <thead>
@@ -131,7 +131,7 @@ export default function UsersPage(): React.JSX.Element {
                   {u.id !== currentUser?.id && (
                     <>
                       <button
-                        className={`${btnPrimary} ${btnSm}`}
+                        className={`${btnSecondary} ${btnSm}`}
                         onClick={() => openEdit(u)}
                       >
                         Edit

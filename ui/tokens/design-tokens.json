@@ -9,7 +9,7 @@
     "nav":       { "$value": "#1a1a2e", "$type": "color" },
     "muted":     { "$value": "#888888", "$type": "color" },
     "subtle":    { "$value": "#e0e0e0", "$type": "color" },
-    "border":    { "$value": "#eeeeee", "$type": "color" },
+    "border":    { "$value": "#d1d5db", "$type": "color" },
     "input":     { "$value": "#cccccc", "$type": "color" }
   },
   "shadow": {

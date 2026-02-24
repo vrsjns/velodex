@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { input, btnPrimary, formGroup, label, errorText, successText } from "../styles";
+import { input, btnPrimary, formGroup, label, errorText, successText, pageTitle } from "../styles";
 
 export default function ProfilePage(): React.JSX.Element {
   const { user, updateUser } = useAuth();
@@ -57,7 +57,7 @@ export default function ProfilePage(): React.JSX.Element {
 
   return (
     <>
-      <h1 className="mt-0">Profile</h1>
+      <h1 className={pageTitle}>Profile</h1>
 
       <div className="max-w-lg">
         <h2 className="mt-0">Change Email</h2>

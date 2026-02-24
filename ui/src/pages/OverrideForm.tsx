@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { fetchOverride, createOverride, updateOverride } from "../api";
-import { input, btnPrimary, btnSecondary, formGroup, label, muted } from "../styles";
+import { input, btnPrimary, btnSecondary, formGroup, label, muted, pageTitle } from "../styles";
 
 interface OverrideFormData {
   source: string;
@@ -91,7 +91,7 @@ export default function OverrideForm(): React.JSX.Element {
 
   return (
     <>
-      <h1 className="mt-0">{isEdit ? "Edit override" : "New override"}</h1>
+      <h1 className={pageTitle}>{isEdit ? "Edit override" : "New override"}</h1>
       {error && <p className="text-red-600 text-sm">{error}</p>}
       <form className="max-w-lg" onSubmit={handleSubmit}>
         <div className={formGroup}>

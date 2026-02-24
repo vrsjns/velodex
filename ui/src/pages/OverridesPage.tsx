@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchOverrides, deleteOverride } from "../api";
 import type { Override } from "../types";
-import { btnPrimary, btnSecondary, btnDanger, muted } from "../styles";
+import { btnPrimary, btnSecondary, btnDanger, muted, pageTitle } from "../styles";
 
 const th = "bg-gray-100 font-semibold px-3 py-2 border border-border text-sm text-left";
 const td = "px-3 py-2 border border-border text-sm";
@@ -28,7 +28,7 @@ export default function OverridesPage(): React.JSX.Element {
 
   return (
     <>
-      <h1 className="mt-0">Overrides</h1>
+      <h1 className={pageTitle}>Overrides</h1>
       <div className="mb-4">
         <Link className={btnPrimary} to="/overrides/new">
           New override
