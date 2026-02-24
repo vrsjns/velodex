@@ -1,8 +1,9 @@
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
-from fastapi import Cookie, Depends, FastAPI, HTTPException, Response
+from fastapi import Cookie, Depends, FastAPI, HTTPException, Response, Security
 from fastapi.responses import FileResponse
+from fastapi.security import APIKeyCookie
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -22,9 +23,71 @@ from velodex.web.auth import (
     verify_password,
 )
 
-app = FastAPI(title="Velodex")
+app = FastAPI(
+    title="Velodex",
+    description=(
+        "UCI professional road cyclist data platform. "
+        "Scrapes rider profiles from the UCI website, tracks changes with SCD2 history in PostgreSQL, "
+        "allows manual corrections via an admin UI, and exports merged data to AWS S3.\n\n"
+        "**Authentication**: Protected endpoints require an `access_token` HTTP-only cookie "
+        "set by `/api/auth/login` or `/api/auth/register`. "
+        "Access tokens expire after 15 minutes; use `/api/auth/refresh` to renew via the "
+        "refresh cookie (7-day TTL)."
+    ),
+    version="1.0.0",
+)
 
 UI_DIST = Path(__file__).resolve().parent.parent.parent / "ui" / "dist"
+
+cookie_scheme = APIKeyCookie(name="access_token", auto_error=False)
+
+
+# ── Response models ───────────────────────────────────────────────────────
+
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    role: str
+
+
+class RiderOut(BaseModel):
+    source: Optional[str] = None
+    source_url: Optional[str] = None
+    name: Optional[str] = None
+    nationality: Optional[str] = None
+    birth_date: Optional[str] = None
+    sanctions: Optional[str] = None
+    team: Optional[str] = None
+    instagram: Optional[str] = None
+    notes: Optional[str] = None
+    scraped_at: Optional[str] = None
+    valid_from: Optional[str] = None
+
+
+class OverrideOut(BaseModel):
+    id: int
+    source: Optional[str] = None
+    source_url: Optional[str] = None
+    name: Optional[str] = None
+    nationality: Optional[str] = None
+    birth_date: Optional[str] = None
+    sanctions: Optional[str] = None
+    team: Optional[str] = None
+    instagram: Optional[str] = None
+    notes: Optional[str] = None
+    is_manual_entry: bool
+    manual_key: Optional[str] = None
+    reason: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class AdminUserOut(BaseModel):
+    id: int
+    email: str
+    role: str
+    created_at: Optional[str] = None
 
 
 # ── Auth endpoints ───────────────────────────────────────────────────────
@@ -35,7 +98,13 @@ class AuthBody(BaseModel):
     password: str
 
 
-@app.post("/api/auth/register", status_code=201)
+@app.post(
+    "/api/auth/register",
+    tags=["auth"],
+    summary="Register a new user",
+    response_model=UserOut,
+    status_code=201,
+)
 def auth_register(body: AuthBody, response: Response, conn=Depends(get_db)):
     existing = get_user_by_email(conn, body.email)
     if existing:
@@ -45,7 +114,12 @@ def auth_register(body: AuthBody, response: Response, conn=Depends(get_db)):
     return {"id": user["id"], "email": user["email"], "role": user["role"]}
 
 
-@app.post("/api/auth/login")
+@app.post(
+    "/api/auth/login",
+    tags=["auth"],
+    summary="Log in",
+    response_model=UserOut,
+)
 def auth_login(body: AuthBody, response: Response, conn=Depends(get_db)):
     user = get_user_by_email(conn, body.email)
     if not user or not verify_password(body.password, user["password_hash"]):
@@ -54,18 +128,32 @@ def auth_login(body: AuthBody, response: Response, conn=Depends(get_db)):
     return {"id": user["id"], "email": user["email"], "role": user["role"]}
 
 
-@app.post("/api/auth/logout")
+@app.post(
+    "/api/auth/logout",
+    tags=["auth"],
+    summary="Log out",
+)
 def auth_logout(response: Response):
     clear_auth_cookies(response)
     return {"ok": True}
 
 
-@app.get("/api/auth/me")
+@app.get(
+    "/api/auth/me",
+    tags=["auth"],
+    summary="Get current user",
+    response_model=UserOut,
+    dependencies=[Security(cookie_scheme)],
+)
 def auth_me(user=Depends(get_current_user)):
     return {"id": user["id"], "email": user["email"], "role": user["role"]}
 
 
-@app.post("/api/auth/refresh")
+@app.post(
+    "/api/auth/refresh",
+    tags=["auth"],
+    summary="Refresh access token",
+)
 def auth_refresh(
     response: Response,
     refresh_token: str = Cookie(None),
@@ -89,7 +177,13 @@ class ProfileBody(BaseModel):
     new_password: Optional[str] = None
 
 
-@app.put("/api/auth/profile")
+@app.put(
+    "/api/auth/profile",
+    tags=["auth"],
+    summary="Update own email or password",
+    response_model=UserOut,
+    dependencies=[Security(cookie_scheme)],
+)
 def auth_update_profile(
     body: ProfileBody,
     response: Response,
@@ -118,7 +212,13 @@ def auth_update_profile(
 # ── JSON API ─────────────────────────────────────────────────────────────
 
 
-@app.get("/api/riders")
+@app.get(
+    "/api/riders",
+    tags=["riders"],
+    summary="List or search riders",
+    response_model=List[RiderOut],
+    dependencies=[Security(cookie_scheme)],
+)
 def api_riders(q: str = "", conn=Depends(get_db), user=Depends(get_current_user)):
     with conn.cursor() as cur:
         if q:
@@ -148,7 +248,13 @@ def api_riders(q: str = "", conn=Depends(get_db), user=Depends(get_current_user)
     return rows
 
 
-@app.get("/api/overrides")
+@app.get(
+    "/api/overrides",
+    tags=["overrides"],
+    summary="List all overrides",
+    response_model=List[OverrideOut],
+    dependencies=[Security(cookie_scheme)],
+)
 def api_overrides(conn=Depends(get_db), user=Depends(get_current_user)):
     with conn.cursor() as cur:
         cur.execute(
@@ -189,7 +295,13 @@ def _fetch_override(override_id: int, conn):
     return d
 
 
-@app.get("/api/overrides/{override_id}")
+@app.get(
+    "/api/overrides/{override_id}",
+    tags=["overrides"],
+    summary="Get override by ID",
+    response_model=OverrideOut,
+    dependencies=[Security(cookie_scheme)],
+)
 def api_override_detail(override_id: int, conn=Depends(get_db), user=Depends(get_current_user)):
     return _fetch_override(override_id, conn)
 
@@ -213,7 +325,21 @@ def _empty_to_none(v):
     return v if v else None
 
 
-@app.post("/api/overrides", status_code=201)
+@app.post(
+    "/api/overrides",
+    tags=["overrides"],
+    summary="Create override or manual entry",
+    description=(
+        "Creates a data override or a standalone manual entry.\n\n"
+        "**Correction** (`is_manual_entry=false`): link to a scraped rider via `source_url`; "
+        "any non-null override fields win field-by-field in the merged view.\n\n"
+        "**Manual entry** (`is_manual_entry=true`): a rider not on the UCI site, "
+        "identified by a unique `manual_key`."
+    ),
+    response_model=OverrideOut,
+    status_code=201,
+    dependencies=[Security(cookie_scheme)],
+)
 def api_override_create(body: OverrideBody, conn=Depends(get_db), admin=Depends(require_admin)):
     with conn.cursor() as cur:
         cur.execute(
@@ -242,7 +368,13 @@ def api_override_create(body: OverrideBody, conn=Depends(get_db), admin=Depends(
     return _fetch_override(new_id, conn)
 
 
-@app.put("/api/overrides/{override_id}")
+@app.put(
+    "/api/overrides/{override_id}",
+    tags=["overrides"],
+    summary="Update override",
+    response_model=OverrideOut,
+    dependencies=[Security(cookie_scheme)],
+)
 def api_override_update(override_id: int, body: OverrideBody, conn=Depends(get_db), admin=Depends(require_admin)):
     with conn.cursor() as cur:
         cur.execute(
@@ -276,7 +408,13 @@ def api_override_update(override_id: int, body: OverrideBody, conn=Depends(get_d
     return _fetch_override(override_id, conn)
 
 
-@app.delete("/api/overrides/{override_id}", status_code=204)
+@app.delete(
+    "/api/overrides/{override_id}",
+    tags=["overrides"],
+    summary="Delete override",
+    status_code=204,
+    dependencies=[Security(cookie_scheme)],
+)
 def api_override_delete(override_id: int, conn=Depends(get_db), admin=Depends(require_admin)):
     with conn.cursor() as cur:
         cur.execute(
@@ -292,7 +430,13 @@ def api_override_delete(override_id: int, conn=Depends(get_db), admin=Depends(re
 # ── Admin endpoints ──────────────────────────────────────────────────────
 
 
-@app.get("/api/admin/users")
+@app.get(
+    "/api/admin/users",
+    tags=["admin"],
+    summary="List all users",
+    response_model=List[AdminUserOut],
+    dependencies=[Security(cookie_scheme)],
+)
 def admin_list_users(conn=Depends(get_db), admin=Depends(require_admin)):
     with conn.cursor() as cur:
         cur.execute(
@@ -314,7 +458,13 @@ class UpdateUserBody(BaseModel):
     new_password: Optional[str] = None
 
 
-@app.put("/api/admin/users/{user_id}")
+@app.put(
+    "/api/admin/users/{user_id}",
+    tags=["admin"],
+    summary="Update user",
+    response_model=UserOut,
+    dependencies=[Security(cookie_scheme)],
+)
 def admin_update_user(user_id: int, body: UpdateUserBody, conn=Depends(get_db), admin=Depends(require_admin)):
     if not body.role and not body.email and not body.new_password:
         raise HTTPException(status_code=400, detail="At least one field must be provided")
@@ -346,7 +496,13 @@ def admin_update_user(user_id: int, body: UpdateUserBody, conn=Depends(get_db), 
     return {"id": updated["id"], "email": updated["email"], "role": updated["role"]}
 
 
-@app.delete("/api/admin/users/{user_id}", status_code=204)
+@app.delete(
+    "/api/admin/users/{user_id}",
+    tags=["admin"],
+    summary="Delete user",
+    status_code=204,
+    dependencies=[Security(cookie_scheme)],
+)
 def admin_delete_user(user_id: int, conn=Depends(get_db), admin=Depends(require_admin)):
     if user_id == admin["id"]:
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
