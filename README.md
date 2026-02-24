@@ -130,27 +130,7 @@ Copy `.env.example` to `.env`.
 
 ## API
 
-All endpoints require authentication (JWT in HTTP-only cookie) except login and register.
-
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | — | Register new user |
-| `POST` | `/api/auth/login` | — | Login; sets access + refresh cookies |
-| `POST` | `/api/auth/logout` | User | Clear cookies |
-| `GET` | `/api/auth/me` | User | Current user info |
-| `POST` | `/api/auth/refresh` | — | Refresh access token via refresh cookie |
-| `PUT` | `/api/auth/profile` | User | Update own email / password |
-| `GET` | `/api/riders` | User | List/search riders (`?q=<name>`) |
-| `GET` | `/api/overrides` | Admin | List all overrides |
-| `GET` | `/api/overrides/{id}` | Admin | Get single override |
-| `POST` | `/api/overrides` | Admin | Create override or manual entry |
-| `PUT` | `/api/overrides/{id}` | Admin | Update override |
-| `DELETE` | `/api/overrides/{id}` | Admin | Delete override |
-| `GET` | `/api/admin/users` | Admin | List all users |
-| `PUT` | `/api/admin/users/{id}` | Admin | Update user (role, email, password) |
-| `DELETE` | `/api/admin/users/{id}` | Admin | Delete user |
-
-Access tokens expire after 15 minutes; refresh tokens after 7 days.
+The web app exposes a REST API documented interactively via Swagger UI at `/docs` when the server is running. See [Environment Variables](#environment-variables) for setup.
 
 ## Tech Stack
 
