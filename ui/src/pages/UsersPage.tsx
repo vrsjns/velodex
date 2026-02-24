@@ -5,8 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import type { AdminUser } from "../types";
 import { input, btnPrimary, btnSecondary, btnDanger, btnSm, formGroup, label, muted, errorText, successText } from "../styles";
 
-const th = "bg-gray-100 font-semibold px-3 py-2 border border-gray-200 text-sm text-left";
-const td = "px-3 py-2 border border-gray-200 text-sm";
+const th = "bg-gray-100 font-semibold px-3 py-2 border border-border text-sm text-left";
+const td = "px-3 py-2 border border-border text-sm";
 
 export default function UsersPage(): React.JSX.Element {
   const { user: currentUser } = useAuth();
@@ -99,7 +99,7 @@ export default function UsersPage(): React.JSX.Element {
     <>
       <h1 className="mt-0">Users</h1>
       {error && <p className={errorText}>{error}</p>}
-      <table className="w-full border-collapse bg-white rounded-md shadow-sm overflow-hidden">
+      <table className="w-full border-collapse bg-surface rounded-md shadow-sm overflow-hidden">
         <thead>
           <tr>
             <th className={th}>Email</th>
@@ -117,7 +117,7 @@ export default function UsersPage(): React.JSX.Element {
                   value={u.role}
                   onChange={(e) => handleRoleChange(u.id, e.target.value)}
                   disabled={u.id === currentUser?.id}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-2 py-1 border border-input rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="user">user</option>
                   <option value="admin">admin</option>
@@ -154,7 +154,7 @@ export default function UsersPage(): React.JSX.Element {
       <Dialog.Root open={editing !== null} onOpenChange={(open) => { if (!open) closeEdit(); }}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl w-full max-w-[440px] z-50">
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface p-6 rounded-lg shadow-lg w-full max-w-[440px] z-50">
             <Dialog.Title className="text-lg font-semibold mt-0 mb-4">
               Edit User
             </Dialog.Title>

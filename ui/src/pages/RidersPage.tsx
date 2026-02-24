@@ -4,8 +4,8 @@ import { fetchRiders } from "../api";
 import type { Rider } from "../types";
 import { btnPrimary, btnSecondary, muted } from "../styles";
 
-const th = "bg-gray-100 font-semibold px-3 py-2 border border-gray-200 text-sm text-left";
-const td = "px-3 py-2 border border-gray-200 text-sm";
+const th = "bg-gray-100 font-semibold px-3 py-2 border border-border text-sm text-left";
+const td = "px-3 py-2 border border-border text-sm";
 
 export default function RidersPage(): React.JSX.Element {
   const [riders, setRiders] = useState<Rider[]>([]);
@@ -39,7 +39,7 @@ export default function RidersPage(): React.JSX.Element {
           placeholder="Search by name..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-2.5 py-1.5 border border-input rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand"
         />
         <button className={btnPrimary} type="submit">
           Search
@@ -57,7 +57,7 @@ export default function RidersPage(): React.JSX.Element {
       ) : (
         <>
           <p className={`${muted} mb-4`}>{riders.length} riders</p>
-          <table className="w-full border-collapse bg-white rounded-md shadow-sm overflow-hidden">
+          <table className="w-full border-collapse bg-surface rounded-md shadow-sm overflow-hidden">
             <thead>
               <tr>
                 <th className={th}>Name</th>

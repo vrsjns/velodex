@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "tokens": "style-dictionary build --config tokens/style-dictionary.config.js",
+    "predev": "npm run tokens",
+    "prebuild": "npm run tokens",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
@@ -21,6 +24,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "style-dictionary": "^4.4.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0"
   }

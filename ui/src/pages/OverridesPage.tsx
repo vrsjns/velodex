@@ -4,8 +4,8 @@ import { fetchOverrides, deleteOverride } from "../api";
 import type { Override } from "../types";
 import { btnPrimary, btnSecondary, btnDanger, muted } from "../styles";
 
-const th = "bg-gray-100 font-semibold px-3 py-2 border border-gray-200 text-sm text-left";
-const td = "px-3 py-2 border border-gray-200 text-sm";
+const th = "bg-gray-100 font-semibold px-3 py-2 border border-border text-sm text-left";
+const td = "px-3 py-2 border border-border text-sm";
 
 export default function OverridesPage(): React.JSX.Element {
   const [overrides, setOverrides] = useState<Override[]>([]);
@@ -39,7 +39,7 @@ export default function OverridesPage(): React.JSX.Element {
       ) : overrides.length === 0 ? (
         <p className={`${muted} text-center`}>No overrides yet.</p>
       ) : (
-        <table className="w-full border-collapse bg-white rounded-md shadow-sm overflow-hidden">
+        <table className="w-full border-collapse bg-surface rounded-md shadow-sm overflow-hidden">
           <thead>
             <tr>
               <th className={th}>Name</th>

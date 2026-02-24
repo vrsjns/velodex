@@ -22,9 +22,9 @@ export default function LoginPage(): React.JSX.Element {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-center min-h-screen bg-page">
       <form
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm"
+        className="bg-surface p-8 rounded-lg shadow-md w-full max-w-sm"
         onSubmit={handleSubmit}
       >
         <h1 className="mt-0 mb-6 text-2xl font-semibold">Login</h1>

@@ -1,0 +1,20 @@
+{
+  "color": {
+    "brand":     { "$value": "#2563eb", "$type": "color" },
+    "danger":    { "$value": "#dc2626", "$type": "color" },
+    "secondary": { "$value": "#6b7280", "$type": "color" },
+    "success":   { "$value": "#16a34a", "$type": "color" },
+    "surface":   { "$value": "#ffffff", "$type": "color" },
+    "page":      { "$value": "#f5f5f5", "$type": "color" },
+    "nav":       { "$value": "#1a1a2e", "$type": "color" },
+    "muted":     { "$value": "#888888", "$type": "color" },
+    "subtle":    { "$value": "#e0e0e0", "$type": "color" },
+    "border":    { "$value": "#eeeeee", "$type": "color" },
+    "input":     { "$value": "#cccccc", "$type": "color" }
+  },
+  "shadow": {
+    "sm": { "$value": "0 1px 3px rgba(0, 0, 0, 0.1)",  "$type": "shadow" },
+    "md": { "$value": "0 2px 8px rgba(0, 0, 0, 0.1)",  "$type": "shadow" },
+    "lg": { "$value": "0 4px 16px rgba(0, 0, 0, 0.2)", "$type": "shadow" }
+  }
+}

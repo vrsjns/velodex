@@ -7,7 +7,7 @@ export default function Layout(): React.JSX.Element {
 
   return (
     <>
-      <nav className="bg-[#1a1a2e] flex items-center gap-6 px-6 py-3">
+      <nav className="bg-nav flex items-center gap-6 px-6 py-3">
         <NavLink to="/riders" className="text-lg font-bold text-white no-underline hover:no-underline">
           Velodex
         </NavLink>
