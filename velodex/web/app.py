@@ -217,9 +217,9 @@ def auth_update_profile(
     tags=["riders"],
     summary="List or search riders",
     response_model=List[RiderOut],
-    dependencies=[Security(cookie_scheme)],
+    dependencies=[Security(cookie_scheme), Depends(get_current_user)],
 )
-def api_riders(q: str = "", conn=Depends(get_db), user=Depends(get_current_user)):
+def api_riders(q: str = "", conn=Depends(get_db)):
     with conn.cursor() as cur:
         if q:
             cur.execute(
@@ -253,9 +253,9 @@ def api_riders(q: str = "", conn=Depends(get_db), user=Depends(get_current_user)
     tags=["overrides"],
     summary="List all overrides",
     response_model=List[OverrideOut],
-    dependencies=[Security(cookie_scheme)],
+    dependencies=[Security(cookie_scheme), Depends(get_current_user)],
 )
-def api_overrides(conn=Depends(get_db), user=Depends(get_current_user)):
+def api_overrides(conn=Depends(get_db)):
     with conn.cursor() as cur:
         cur.execute(
             """SELECT id, source, source_url, name, nationality, birth_date,
@@ -300,9 +300,9 @@ def _fetch_override(override_id: int, conn):
     tags=["overrides"],
     summary="Get override by ID",
     response_model=OverrideOut,
-    dependencies=[Security(cookie_scheme)],
+    dependencies=[Security(cookie_scheme), Depends(get_current_user)],
 )
-def api_override_detail(override_id: int, conn=Depends(get_db), user=Depends(get_current_user)):
+def api_override_detail(override_id: int, conn=Depends(get_db)):
     return _fetch_override(override_id, conn)
 
 
@@ -338,9 +338,9 @@ def _empty_to_none(v):
     ),
     response_model=OverrideOut,
     status_code=201,
-    dependencies=[Security(cookie_scheme)],
+    dependencies=[Security(cookie_scheme), Depends(require_admin)],
 )
-def api_override_create(body: OverrideBody, conn=Depends(get_db), admin=Depends(require_admin)):
+def api_override_create(body: OverrideBody, conn=Depends(get_db)):
     with conn.cursor() as cur:
         cur.execute(
             """INSERT INTO riders_overrides
@@ -373,9 +373,9 @@ def api_override_create(body: OverrideBody, conn=Depends(get_db), admin=Depends(
     tags=["overrides"],
     summary="Update override",
     response_model=OverrideOut,
-    dependencies=[Security(cookie_scheme)],
+    dependencies=[Security(cookie_scheme), Depends(require_admin)],
 )
-def api_override_update(override_id: int, body: OverrideBody, conn=Depends(get_db), admin=Depends(require_admin)):
+def api_override_update(override_id: int, body: OverrideBody, conn=Depends(get_db)):
     with conn.cursor() as cur:
         cur.execute(
             """UPDATE riders_overrides SET
@@ -413,9 +413,9 @@ def api_override_update(override_id: int, body: OverrideBody, conn=Depends(get_d
     tags=["overrides"],
     summary="Delete override",
     status_code=204,
-    dependencies=[Security(cookie_scheme)],
+    dependencies=[Security(cookie_scheme), Depends(require_admin)],
 )
-def api_override_delete(override_id: int, conn=Depends(get_db), admin=Depends(require_admin)):
+def api_override_delete(override_id: int, conn=Depends(get_db)):
     with conn.cursor() as cur:
         cur.execute(
             "DELETE FROM riders_overrides WHERE id = %s RETURNING id",
@@ -435,9 +435,9 @@ def api_override_delete(override_id: int, conn=Depends(get_db), admin=Depends(re
     tags=["admin"],
     summary="List all users",
     response_model=List[AdminUserOut],
-    dependencies=[Security(cookie_scheme)],
+    dependencies=[Security(cookie_scheme), Depends(require_admin)],
 )
-def admin_list_users(conn=Depends(get_db), admin=Depends(require_admin)):
+def admin_list_users(conn=Depends(get_db)):
     with conn.cursor() as cur:
         cur.execute(
             "SELECT id, email, role, created_at FROM users ORDER BY created_at"
@@ -463,9 +463,9 @@ class UpdateUserBody(BaseModel):
     tags=["admin"],
     summary="Update user",
     response_model=UserOut,
-    dependencies=[Security(cookie_scheme)],
+    dependencies=[Security(cookie_scheme), Depends(require_admin)],
 )
-def admin_update_user(user_id: int, body: UpdateUserBody, conn=Depends(get_db), admin=Depends(require_admin)):
+def admin_update_user(user_id: int, body: UpdateUserBody, conn=Depends(get_db)):
     if not body.role and not body.email and not body.new_password:
         raise HTTPException(status_code=400, detail="At least one field must be provided")
 
