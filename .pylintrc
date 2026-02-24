@@ -23,7 +23,3 @@ max-line-length=120
 # db.py export function legitimately needs more than 15 locals
 max-locals=20
 
-[TYPECHECK]
-# Allow pylint to load the psycopg C extension so it can resolve
-# connection/cursor member types correctly
-extension-pkg-allow-list=psycopg
