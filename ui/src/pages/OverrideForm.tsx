@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { fetchOverride, createOverride, updateOverride } from "../api";
+import { input, btnPrimary, btnSecondary, formGroup, label, muted } from "../styles";
 
 interface OverrideFormData {
   source: string;
@@ -86,15 +87,15 @@ export default function OverrideForm(): React.JSX.Element {
     }
   }
 
-  if (loading) return <p className="muted">Loading...</p>;
+  if (loading) return <p className={muted}>Loading...</p>;
 
   return (
     <>
-      <h1>{isEdit ? "Edit override" : "New override"}</h1>
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
-      <form className="override-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>
+      <h1 className="mt-0">{isEdit ? "Edit override" : "New override"}</h1>
+      {error && <p className="text-red-600 text-sm">{error}</p>}
+      <form className="max-w-lg" onSubmit={handleSubmit}>
+        <div className={formGroup}>
+          <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium">
             <input
               type="checkbox"
               name="is_manual_entry"
@@ -106,131 +107,72 @@ export default function OverrideForm(): React.JSX.Element {
         </div>
 
         {form.is_manual_entry ? (
-          <div className="form-group">
-            <label htmlFor="manual_key">Manual key</label>
-            <input
-              type="text"
-              id="manual_key"
-              name="manual_key"
-              value={form.manual_key}
-              onChange={handleChange}
-            />
+          <div className={formGroup}>
+            <label htmlFor="manual_key" className={label}>Manual key</label>
+            <input type="text" id="manual_key" name="manual_key"
+              className={input} value={form.manual_key} onChange={handleChange} />
           </div>
         ) : (
           <>
-            <div className="form-group">
-              <label htmlFor="source">Source</label>
-              <input
-                type="text"
-                id="source"
-                name="source"
-                value={form.source}
-                onChange={handleChange}
-              />
+            <div className={formGroup}>
+              <label htmlFor="source" className={label}>Source</label>
+              <input type="text" id="source" name="source"
+                className={input} value={form.source} onChange={handleChange} />
             </div>
-            <div className="form-group">
-              <label htmlFor="source_url">Source URL</label>
-              <input
-                type="text"
-                id="source_url"
-                name="source_url"
-                value={form.source_url}
-                onChange={handleChange}
-              />
+            <div className={formGroup}>
+              <label htmlFor="source_url" className={label}>Source URL</label>
+              <input type="text" id="source_url" name="source_url"
+                className={input} value={form.source_url} onChange={handleChange} />
             </div>
           </>
         )}
 
-        <div className="form-group">
-          <label htmlFor="name">Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-          />
+        <div className={formGroup}>
+          <label htmlFor="name" className={label}>Name</label>
+          <input type="text" id="name" name="name"
+            className={input} value={form.name} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label htmlFor="nationality">Nationality</label>
-          <input
-            type="text"
-            id="nationality"
-            name="nationality"
-            value={form.nationality}
-            onChange={handleChange}
-          />
+        <div className={formGroup}>
+          <label htmlFor="nationality" className={label}>Nationality</label>
+          <input type="text" id="nationality" name="nationality"
+            className={input} value={form.nationality} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label htmlFor="birth_date">Birth date</label>
-          <input
-            type="text"
-            id="birth_date"
-            name="birth_date"
-            value={form.birth_date}
-            onChange={handleChange}
-          />
+        <div className={formGroup}>
+          <label htmlFor="birth_date" className={label}>Birth date</label>
+          <input type="text" id="birth_date" name="birth_date"
+            className={input} value={form.birth_date} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label htmlFor="sanctions">Sanctions</label>
-          <input
-            type="text"
-            id="sanctions"
-            name="sanctions"
-            value={form.sanctions}
-            onChange={handleChange}
-          />
+        <div className={formGroup}>
+          <label htmlFor="sanctions" className={label}>Sanctions</label>
+          <input type="text" id="sanctions" name="sanctions"
+            className={input} value={form.sanctions} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label htmlFor="team">Team</label>
-          <input
-            type="text"
-            id="team"
-            name="team"
-            value={form.team}
-            onChange={handleChange}
-          />
+        <div className={formGroup}>
+          <label htmlFor="team" className={label}>Team</label>
+          <input type="text" id="team" name="team"
+            className={input} value={form.team} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label htmlFor="instagram">Instagram</label>
-          <input
-            type="text"
-            id="instagram"
-            name="instagram"
-            value={form.instagram}
-            onChange={handleChange}
-          />
+        <div className={formGroup}>
+          <label htmlFor="instagram" className={label}>Instagram</label>
+          <input type="text" id="instagram" name="instagram"
+            className={input} value={form.instagram} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label htmlFor="notes">Notes</label>
-          <textarea
-            id="notes"
-            name="notes"
-            rows={3}
-            value={form.notes}
-            onChange={handleChange}
-          />
+        <div className={formGroup}>
+          <label htmlFor="notes" className={label}>Notes</label>
+          <textarea id="notes" name="notes" rows={3}
+            className={`${input} resize-y`} value={form.notes} onChange={handleChange} />
         </div>
-        <div className="form-group">
-          <label htmlFor="reason">Reason for override</label>
-          <textarea
-            id="reason"
-            name="reason"
-            rows={2}
-            value={form.reason}
-            onChange={handleChange}
-          />
+        <div className={formGroup}>
+          <label htmlFor="reason" className={label}>Reason for override</label>
+          <textarea id="reason" name="reason" rows={2}
+            className={`${input} resize-y`} value={form.reason} onChange={handleChange} />
         </div>
 
-        <div className="gap-sm">
-          <button className="btn btn-primary" type="submit">
+        <div className="inline-flex gap-1.5">
+          <button className={btnPrimary} type="submit">
             {isEdit ? "Update" : "Create"}
           </button>
-          <button
-            className="btn btn-secondary"
-            type="button"
-            onClick={() => navigate("/overrides")}
-          >
+          <button className={btnSecondary} type="button" onClick={() => navigate("/overrides")}>
             Cancel
           </button>
         </div>

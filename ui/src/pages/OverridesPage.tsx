@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchOverrides, deleteOverride } from "../api";
 import type { Override } from "../types";
+import { btnPrimary, btnSecondary, btnDanger, muted } from "../styles";
+
+const th = "bg-gray-100 font-semibold px-3 py-2 border border-gray-200 text-sm text-left";
+const td = "px-3 py-2 border border-gray-200 text-sm";
 
 export default function OverridesPage(): React.JSX.Element {
   const [overrides, setOverrides] = useState<Override[]>([]);
@@ -24,70 +28,58 @@ export default function OverridesPage(): React.JSX.Element {
 
   return (
     <>
-      <h1>Overrides</h1>
-      <div className="mb-1">
-        <Link className="btn btn-primary" to="/overrides/new">
+      <h1 className="mt-0">Overrides</h1>
+      <div className="mb-4">
+        <Link className={btnPrimary} to="/overrides/new">
           New override
         </Link>
       </div>
       {loading ? (
-        <p className="muted">Loading...</p>
+        <p className={muted}>Loading...</p>
       ) : overrides.length === 0 ? (
-        <p className="muted" style={{ textAlign: "center" }}>
-          No overrides yet.
-        </p>
+        <p className={`${muted} text-center`}>No overrides yet.</p>
       ) : (
-        <table>
+        <table className="w-full border-collapse bg-white rounded-md shadow-sm overflow-hidden">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Source / Key</th>
-              <th>Team</th>
-              <th>Reason</th>
-              <th>Updated</th>
-              <th>Actions</th>
+              <th className={th}>Name</th>
+              <th className={th}>Type</th>
+              <th className={th}>Source / Key</th>
+              <th className={th}>Team</th>
+              <th className={th}>Reason</th>
+              <th className={th}>Updated</th>
+              <th className={th}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {overrides.map((o) => (
-              <tr key={o.id}>
-                <td>{o.name}</td>
-                <td>{o.is_manual_entry ? "Manual" : "Correction"}</td>
-                <td>
+              <tr key={o.id} className="group">
+                <td className={`${td} group-hover:bg-gray-50`}>{o.name}</td>
+                <td className={`${td} group-hover:bg-gray-50`}>
+                  {o.is_manual_entry ? "Manual" : "Correction"}
+                </td>
+                <td className={`${td} group-hover:bg-gray-50`}>
                   {o.is_manual_entry ? (
                     o.manual_key
                   ) : o.source_url ? (
-                    <a
-                      href={o.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={o.source_url} target="_blank" rel="noopener noreferrer">
                       {o.source || "link"}
                     </a>
                   ) : (
-                    <span className="muted">-</span>
+                    <span className={muted}>-</span>
                   )}
                 </td>
-                <td>{o.team}</td>
-                <td>{o.reason}</td>
-                <td className="muted">
-                  {o.updated_at
-                    ? new Date(o.updated_at).toLocaleDateString()
-                    : ""}
+                <td className={`${td} group-hover:bg-gray-50`}>{o.team}</td>
+                <td className={`${td} group-hover:bg-gray-50`}>{o.reason}</td>
+                <td className={`${td} group-hover:bg-gray-50 ${muted}`}>
+                  {o.updated_at ? new Date(o.updated_at).toLocaleDateString() : ""}
                 </td>
-                <td className="actions">
-                  <span className="gap-sm">
-                    <Link
-                      className="btn btn-secondary"
-                      to={`/overrides/${o.id}/edit`}
-                    >
+                <td className={`${td} group-hover:bg-gray-50 whitespace-nowrap`}>
+                  <span className="inline-flex gap-1.5">
+                    <Link className={btnSecondary} to={`/overrides/${o.id}/edit`}>
                       Edit
                     </Link>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleDelete(o.id)}
-                    >
+                    <button className={btnDanger} onClick={() => handleDelete(o.id)}>
                       Delete
                     </button>
                   </span>

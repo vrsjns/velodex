@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { fetchUsers, updateUser, deleteUser } from "../api";
 import { useAuth } from "../context/AuthContext";
 import type { AdminUser } from "../types";
+import { input, btnPrimary, btnSecondary, btnDanger, btnSm, formGroup, label, muted, errorText, successText } from "../styles";
+
+const th = "bg-gray-100 font-semibold px-3 py-2 border border-gray-200 text-sm text-left";
+const td = "px-3 py-2 border border-gray-200 text-sm";
 
 export default function UsersPage(): React.JSX.Element {
   const { user: currentUser } = useAuth();
@@ -92,42 +97,49 @@ export default function UsersPage(): React.JSX.Element {
 
   return (
     <>
-      <h1>Users</h1>
-      {error && <p className="error">{error}</p>}
-      <table>
+      <h1 className="mt-0">Users</h1>
+      {error && <p className={errorText}>{error}</p>}
+      <table className="w-full border-collapse bg-white rounded-md shadow-sm overflow-hidden">
         <thead>
           <tr>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Created</th>
-            <th>Actions</th>
+            <th className={th}>Email</th>
+            <th className={th}>Role</th>
+            <th className={th}>Created</th>
+            <th className={th}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {users.map((u) => (
-            <tr key={u.id}>
-              <td>{u.email}</td>
-              <td>
+            <tr key={u.id} className="group">
+              <td className={`${td} group-hover:bg-gray-50`}>{u.email}</td>
+              <td className={`${td} group-hover:bg-gray-50`}>
                 <select
                   value={u.role}
                   onChange={(e) => handleRoleChange(u.id, e.target.value)}
                   disabled={u.id === currentUser?.id}
+                  className="px-2 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="user">user</option>
                   <option value="admin">admin</option>
                 </select>
               </td>
-              <td className="muted">
+              <td className={`${td} group-hover:bg-gray-50 ${muted}`}>
                 {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}
               </td>
-              <td className="actions">
-                <span className="gap-sm">
+              <td className={`${td} group-hover:bg-gray-50 whitespace-nowrap`}>
+                <span className="inline-flex gap-1.5">
                   {u.id !== currentUser?.id && (
                     <>
-                      <button className="btn btn-primary btn-sm" onClick={() => openEdit(u)}>
+                      <button
+                        className={`${btnPrimary} ${btnSm}`}
+                        onClick={() => openEdit(u)}
+                      >
                         Edit
                       </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDelete(u.id)}>
+                      <button
+                        className={`${btnDanger} ${btnSm}`}
+                        onClick={() => handleDelete(u.id)}
+                      >
                         Delete
                       </button>
                     </>
@@ -139,22 +151,27 @@ export default function UsersPage(): React.JSX.Element {
         </tbody>
       </table>
 
-      {editing && (
-        <div className="modal-backdrop" onClick={closeEdit}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Edit User</h2>
-            <form onSubmit={handleEditSave} className="override-form">
-              <div className="form-group">
-                <label>Email</label>
+      <Dialog.Root open={editing !== null} onOpenChange={(open) => { if (!open) closeEdit(); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl w-full max-w-[440px] z-50">
+            <Dialog.Title className="text-lg font-semibold mt-0 mb-4">
+              Edit User
+            </Dialog.Title>
+            <form onSubmit={handleEditSave} className="max-w-lg">
+              <div className={formGroup}>
+                <label className={label}>Email</label>
                 <input
                   type="text"
+                  className={input}
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                 />
               </div>
-              <div className="form-group">
-                <label>Role</label>
+              <div className={formGroup}>
+                <label className={label}>Role</label>
                 <select
+                  className={input}
                   value={editForm.role}
                   onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                 >
@@ -162,28 +179,35 @@ export default function UsersPage(): React.JSX.Element {
                   <option value="admin">admin</option>
                 </select>
               </div>
-              <div className="form-group">
-                <label>New Password <span className="muted">(leave blank to keep current)</span></label>
+              <div className={formGroup}>
+                <label className={label}>
+                  New Password{" "}
+                  <span className={muted}>(leave blank to keep current)</span>
+                </label>
                 <input
                   type="text"
+                  className={input}
                   value={editForm.new_password}
                   onChange={(e) => setEditForm({ ...editForm, new_password: e.target.value })}
                 />
               </div>
-              {editError && <p className="error">{editError}</p>}
-              {editSuccess && <p className="success">{editSuccess}</p>}
-              <div className="gap-sm">
-                <button type="submit" className="btn btn-primary" disabled={saving}>
+              {editError && <p className={errorText}>{editError}</p>}
+              {editSuccess && <p className={successText}>{editSuccess}</p>}
+              <div className="inline-flex gap-1.5">
+                <button type="submit" className={btnPrimary} disabled={saving}>
                   {saving ? "Saving..." : "Save"}
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={closeEdit}>
+                <button type="button" className={btnSecondary} onClick={closeEdit}>
                   Cancel
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+            <Dialog.Close className="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-xl leading-none cursor-pointer bg-transparent border-none" aria-label="Close">
+              ✕
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }

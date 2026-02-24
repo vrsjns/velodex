@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { input, btnPrimary, formGroup, label, errorText, successText } from "../styles";
 
 export default function ProfilePage(): React.JSX.Element {
   const { user, updateUser } = useAuth();
@@ -56,59 +57,66 @@ export default function ProfilePage(): React.JSX.Element {
 
   return (
     <>
-      <h1>Profile</h1>
+      <h1 className="mt-0">Profile</h1>
 
-      <div className="override-form">
-        <h2>Change Email</h2>
+      <div className="max-w-lg">
+        <h2 className="mt-0">Change Email</h2>
         <form onSubmit={handleEmailSubmit}>
-          <div className="form-group">
-            <label>Email</label>
+          <div className={formGroup}>
+            <label className={label}>Email</label>
             <input
               type="email"
+              className={input}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
-          {emailError && <p className="error">{emailError}</p>}
-          {emailSuccess && <p className="success">{emailSuccess}</p>}
-          <button className="btn btn-primary" disabled={emailLoading || email === user?.email}>
+          {emailError && <p className={errorText}>{emailError}</p>}
+          {emailSuccess && <p className={successText}>{emailSuccess}</p>}
+          <button
+            className={btnPrimary}
+            disabled={emailLoading || email === user?.email}
+          >
             {emailLoading ? "Saving…" : "Update Email"}
           </button>
         </form>
 
-        <h2 style={{ marginTop: "2rem" }}>Change Password</h2>
+        <h2 className="mt-8">Change Password</h2>
         <form onSubmit={handlePasswordSubmit}>
-          <div className="form-group">
-            <label>Current Password</label>
+          <div className={formGroup}>
+            <label className={label}>Current Password</label>
             <input
               type="password"
+              className={input}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
             />
           </div>
-          <div className="form-group">
-            <label>New Password</label>
+          <div className={formGroup}>
+            <label className={label}>New Password</label>
             <input
               type="password"
+              className={input}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
           </div>
-          <div className="form-group">
-            <label>Confirm New Password</label>
+          <div className={formGroup}>
+            <label className={label}>Confirm New Password</label>
             <input
               type="password"
+              className={input}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
           </div>
-          {pwError && <p className="error">{pwError}</p>}
-          {pwSuccess && <p className="success">{pwSuccess}</p>}
-          <button className="btn btn-primary" disabled={pwLoading}>
+          {pwError && <p className={errorText}>{pwError}</p>}
+          {pwSuccess && <p className={successText}>{pwSuccess}</p>}
+          <button className={btnPrimary} disabled={pwLoading}>
             {pwLoading ? "Saving…" : "Update Password"}
           </button>
         </form>
