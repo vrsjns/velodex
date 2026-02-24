@@ -54,6 +54,23 @@ services:
     profiles:
       - run
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_URL=postgresql://velostrology:velostrology@postgres:5432/velostrology
+      - JWT_SECRET=dev-secret-change-in-production-env
+      - ADMIN_EMAIL=admin@velodex.com
+      - ADMIN_PASSWORD=admin
+    profiles:
+      - web
+
 volumes:
   localstack-data:
   postgres-data:
