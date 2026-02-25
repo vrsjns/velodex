@@ -99,62 +99,104 @@ export default function UsersPage(): React.JSX.Element {
     <>
       <h1 className={pageTitle}>Users</h1>
       {error && <p className={errorText}>{error}</p>}
-      <table className="w-full border-collapse bg-surface rounded-md shadow-sm overflow-hidden">
-        <thead>
-          <tr>
-            <th className={th}>Email</th>
-            <th className={th}>Role</th>
-            <th className={th}>Created</th>
-            <th className={th}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.id} className="group">
-              <td className={`${td} group-hover:bg-gray-50`}>{u.email}</td>
-              <td className={`${td} group-hover:bg-gray-50`}>
-                <select
-                  value={u.role}
-                  onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                  disabled={u.id === currentUser?.id}
-                  className="px-2 py-1 border border-input rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+      {/* Mobile cards */}
+      <div className="sm:hidden space-y-3">
+        {users.map((u) => (
+          <div key={u.id} className="bg-surface rounded-md shadow-sm p-4">
+            <div className="font-medium text-sm">{u.email}</div>
+            <div className={`text-xs mt-1 ${muted}`}>
+              {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}
+            </div>
+            <div className="mt-2">
+              <select
+                value={u.role}
+                onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                disabled={u.id === currentUser?.id}
+                className="px-2 py-1 border border-input rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
+            {u.id !== currentUser?.id && (
+              <div className="mt-3 inline-flex gap-1.5">
+                <button
+                  className={`${btnSecondary} ${btnSm}`}
+                  onClick={() => openEdit(u)}
                 >
-                  <option value="user">user</option>
-                  <option value="admin">admin</option>
-                </select>
-              </td>
-              <td className={`${td} group-hover:bg-gray-50 ${muted}`}>
-                {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}
-              </td>
-              <td className={`${td} group-hover:bg-gray-50 whitespace-nowrap`}>
-                <span className="inline-flex gap-1.5">
-                  {u.id !== currentUser?.id && (
-                    <>
-                      <button
-                        className={`${btnSecondary} ${btnSm}`}
-                        onClick={() => openEdit(u)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className={`${btnDanger} ${btnSm}`}
-                        onClick={() => handleDelete(u.id)}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </span>
-              </td>
+                  Edit
+                </button>
+                <button
+                  className={`${btnDanger} ${btnSm}`}
+                  onClick={() => handleDelete(u.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full border-collapse bg-surface rounded-md shadow-sm overflow-hidden">
+          <thead>
+            <tr>
+              <th className={th}>Email</th>
+              <th className={th}>Role</th>
+              <th className={th}>Created</th>
+              <th className={th}>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.id} className="group">
+                <td className={`${td} group-hover:bg-gray-50`}>{u.email}</td>
+                <td className={`${td} group-hover:bg-gray-50`}>
+                  <select
+                    value={u.role}
+                    onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                    disabled={u.id === currentUser?.id}
+                    className="px-2 py-1 border border-input rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="user">user</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </td>
+                <td className={`${td} group-hover:bg-gray-50 ${muted}`}>
+                  {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}
+                </td>
+                <td className={`${td} group-hover:bg-gray-50 whitespace-nowrap`}>
+                  <span className="inline-flex gap-1.5">
+                    {u.id !== currentUser?.id && (
+                      <>
+                        <button
+                          className={`${btnSecondary} ${btnSm}`}
+                          onClick={() => openEdit(u)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className={`${btnDanger} ${btnSm}`}
+                          onClick={() => handleDelete(u.id)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <Dialog.Root open={editing !== null} onOpenChange={(open) => { if (!open) closeEdit(); }}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface p-6 rounded-lg shadow-lg w-full max-w-[440px] z-50">
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-[440px] z-50">
             <Dialog.Title className="text-lg font-semibold mt-0 mb-4">
               Edit User
             </Dialog.Title>

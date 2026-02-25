@@ -18,74 +18,145 @@ function ChevronDown(): React.JSX.Element {
   );
 }
 
+function HamburgerIcon(): React.JSX.Element {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M3 6h14M3 10h14M3 14h14" />
+    </svg>
+  );
+}
+
 export default function Layout(): React.JSX.Element {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   return (
     <>
-      <nav className="bg-nav flex items-center gap-6 px-6 py-3">
+      <nav className="bg-nav flex items-center gap-6 px-4 sm:px-6 py-3">
         <NavLink to="/riders" className="text-lg font-bold text-white no-underline hover:no-underline">
           Velodex
         </NavLink>
-        <NavLink
-          to="/riders"
-          className={({ isActive }) =>
-            isActive ? "text-white no-underline" : "text-gray-300 no-underline hover:text-white"
-          }
-        >
-          Riders
-        </NavLink>
-        <NavLink
-          to="/overrides"
-          className={({ isActive }) =>
-            isActive ? "text-white no-underline" : "text-gray-300 no-underline hover:text-white"
-          }
-        >
-          Overrides
-        </NavLink>
-        {user?.role === "admin" && (
+
+        {/* Desktop nav links — hidden on mobile */}
+        <div className="hidden sm:flex items-center gap-6">
           <NavLink
-            to="/admin/users"
+            to="/riders"
             className={({ isActive }) =>
               isActive ? "text-white no-underline" : "text-gray-300 no-underline hover:text-white"
             }
           >
-            Users
+            Riders
           </NavLink>
-        )}
+          <NavLink
+            to="/overrides"
+            className={({ isActive }) =>
+              isActive ? "text-white no-underline" : "text-gray-300 no-underline hover:text-white"
+            }
+          >
+            Overrides
+          </NavLink>
+          {user?.role === "admin" && (
+            <NavLink
+              to="/admin/users"
+              className={({ isActive }) =>
+                isActive ? "text-white no-underline" : "text-gray-300 no-underline hover:text-white"
+              }
+            >
+              Users
+            </NavLink>
+          )}
+        </div>
+
         <div className="flex-grow" />
+
+        {/* Desktop user dropdown — hidden on mobile */}
         {user && (
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <button className="flex items-center gap-2 text-gray-300 text-sm hover:text-white bg-transparent border-none cursor-pointer outline-none">
-                <UserIcon />
-                {user.email}
-                <ChevronDown />
-              </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                align="end"
-                sideOffset={8}
-                className="bg-surface rounded shadow-md py-1 min-w-[160px] z-50"
-              >
-                <DropdownMenu.Item
-                  onSelect={() => navigate("/profile")}
-                  className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+          <div className="hidden sm:block">
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button className="flex items-center gap-2 text-gray-300 text-sm hover:text-white bg-transparent border-none cursor-pointer outline-none">
+                  <UserIcon />
+                  {user.email}
+                  <ChevronDown />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="end"
+                  sideOffset={8}
+                  className="bg-surface rounded shadow-md py-1 min-w-[160px] z-50"
                 >
-                  Profile
-                </DropdownMenu.Item>
-                <DropdownMenu.Separator className="my-1 border-t border-border" />
-                <DropdownMenu.Item
-                  onSelect={logout}
-                  className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+                  <DropdownMenu.Item
+                    onSelect={() => navigate("/profile")}
+                    className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+                  >
+                    Profile
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator className="my-1 border-t border-border" />
+                  <DropdownMenu.Item
+                    onSelect={logout}
+                    className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+                  >
+                    Logout
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          </div>
+        )}
+
+        {/* Mobile hamburger menu — hidden on desktop */}
+        {user && (
+          <div className="sm:hidden">
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button className="flex items-center text-gray-300 hover:text-white bg-transparent border-none cursor-pointer outline-none p-1">
+                  <HamburgerIcon />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="end"
+                  sideOffset={8}
+                  className="bg-surface rounded shadow-md py-1 min-w-[180px] z-50"
                 >
-                  Logout
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+                  <DropdownMenu.Item
+                    onSelect={() => navigate("/riders")}
+                    className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+                  >
+                    Riders
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => navigate("/overrides")}
+                    className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+                  >
+                    Overrides
+                  </DropdownMenu.Item>
+                  {user.role === "admin" && (
+                    <DropdownMenu.Item
+                      onSelect={() => navigate("/admin/users")}
+                      className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+                    >
+                      Users
+                    </DropdownMenu.Item>
+                  )}
+                  <DropdownMenu.Separator className="my-1 border-t border-border" />
+                  <DropdownMenu.Item
+                    onSelect={() => navigate("/profile")}
+                    className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+                  >
+                    Profile
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={logout}
+                    className="px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 outline-none"
+                  >
+                    Logout
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+          </div>
         )}
       </nav>
       <div className="max-w-[1200px] mx-auto my-6 px-4">
