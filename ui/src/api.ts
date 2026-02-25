@@ -2,13 +2,21 @@ import type { User, Rider, Override, AdminUser } from "./types";
 
 const BASE = "/api";
 
-async function request<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T = unknown>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json", ...options.headers },
     credentials: "same-origin",
     ...options,
   });
   if (res.status === 204) return null as T;
+  if (res.status === 401 && retry) {
+    try {
+      await request<{ ok: boolean }>("/auth/refresh", { method: "POST" }, false);
+      return request<T>(path, options, false);
+    } catch {
+      // refresh failed — fall through to throw below
+    }
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `Request failed: ${res.status}`);
@@ -37,10 +45,6 @@ export function logout(): Promise<null> {
 
 export function fetchMe(): Promise<User> {
   return request<User>("/auth/me");
-}
-
-export function refreshToken(): Promise<{ ok: boolean }> {
-  return request<{ ok: boolean }>("/auth/refresh", { method: "POST" });
 }
 
 export function updateProfile(data: {
