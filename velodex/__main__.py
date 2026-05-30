@@ -52,7 +52,7 @@ async def async_main():
     finally:
         conn.close()
 
-    local_file_path = "uci_riders.json"
+    local_file_path = os.getenv("RIDERS_FILE", "riders.json")
     logger.info(f"Saving {len(merged)} riders to {local_file_path}...")
     with open(local_file_path, 'w', encoding='utf-8') as f:
         json.dump(merged, f, indent=2)

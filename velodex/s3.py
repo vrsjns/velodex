@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 def upload_to_s3(local_file_path: str):
     """Upload a local file to the configured S3 bucket."""
     bucket_name = os.getenv("S3_BUCKET_NAME")
-    object_name = "uci_riders.json"
+    object_name = os.getenv("RIDERS_FILE", "riders.json")
     endpoint_url = os.getenv("S3_ENDPOINT_URL")
 
     logger.info(f"Uploading to S3 bucket '{bucket_name}'...")
