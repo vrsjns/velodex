@@ -124,6 +124,24 @@ def upsert_riders(conn, riders: list[dict], source: str = "uci"):
     )
 
 
+def normalize_birth_date(value: str | None) -> str | None:
+    """Normalize a scraped/override birth date to ISO ``YYYY-MM-DD``.
+
+    UCI profiles expose dates as ``DD.MM.YYYY``. Admin overrides may already
+    be ISO. Returns the original string unchanged if it cannot be parsed, so
+    a malformed value is never silently dropped.
+    """
+    if not value:
+        return value
+    for fmt in ("%d.%m.%Y", "%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(value, fmt).date().isoformat()
+        except ValueError:
+            continue
+    logger.warning("Could not normalize birth_date %r; leaving as-is", value)
+    return value
+
+
 def export_merged(conn) -> list[dict]:
     """SELECT from riders_current view and return as list of dicts."""
     with conn.cursor() as cur:
@@ -143,6 +161,8 @@ def export_merged(conn) -> list[dict]:
         for key in ("scraped_at", "valid_from"):
             if d[key] is not None:
                 d[key] = d[key].isoformat()
+        # Normalize birth_date to ISO YYYY-MM-DD for downstream consumers
+        d["birth_date"] = normalize_birth_date(d["birth_date"])
         # Drop None-valued enrichment fields to keep JSON clean
         results.append({k: v for k, v in d.items() if v is not None})
 
