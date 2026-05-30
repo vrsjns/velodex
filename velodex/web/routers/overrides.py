@@ -2,25 +2,16 @@ from typing import List, Optional
 
 from fastapi import Depends, HTTPException, Security
 from fastapi.routing import APIRouter
-from pydantic import BaseModel
 
 from velodex.web.auth import get_current_user, require_admin
 from velodex.web.deps import cookie_scheme, get_db
+from velodex.web.routers.common import RiderFields, row_to_dict
 
 router = APIRouter(prefix="/api", tags=["overrides"])
 
 
-class OverrideOut(BaseModel):
+class OverrideOut(RiderFields):
     id: int
-    source: Optional[str] = None
-    source_url: Optional[str] = None
-    name: Optional[str] = None
-    nationality: Optional[str] = None
-    birth_date: Optional[str] = None
-    sanctions: Optional[str] = None
-    team: Optional[str] = None
-    instagram: Optional[str] = None
-    notes: Optional[str] = None
     is_manual_entry: bool
     manual_key: Optional[str] = None
     reason: Optional[str] = None
@@ -28,16 +19,7 @@ class OverrideOut(BaseModel):
     updated_at: Optional[str] = None
 
 
-class OverrideBody(BaseModel):
-    source: Optional[str] = None
-    source_url: Optional[str] = None
-    name: Optional[str] = None
-    nationality: Optional[str] = None
-    birth_date: Optional[str] = None
-    sanctions: Optional[str] = None
-    team: Optional[str] = None
-    instagram: Optional[str] = None
-    notes: Optional[str] = None
+class OverrideBody(RiderFields):
     is_manual_entry: bool = False
     manual_key: Optional[str] = None
     reason: Optional[str] = None
@@ -60,10 +42,7 @@ def _fetch_override(override_id: int, conn):
         if not row:
             raise HTTPException(status_code=404, detail="Override not found")
         columns = [desc[0] for desc in cur.description]
-        d = dict(zip(columns, row))
-        for key in ("created_at", "updated_at"):
-            if d[key] is not None:
-                d[key] = d[key].isoformat()
+        d = row_to_dict(columns, row, ("created_at", "updated_at"))
     return d
 
 
@@ -83,13 +62,10 @@ def api_overrides(conn=Depends(get_db)):
                ORDER BY updated_at DESC"""
         )
         columns = [desc[0] for desc in cur.description]
-        rows = []
-        for row in cur.fetchall():
-            d = dict(zip(columns, row))
-            for key in ("created_at", "updated_at"):
-                if d[key] is not None:
-                    d[key] = d[key].isoformat()
-            rows.append(d)
+        rows = [
+            row_to_dict(columns, row, ("created_at", "updated_at"))
+            for row in cur.fetchall()
+        ]
     return rows
 
 
