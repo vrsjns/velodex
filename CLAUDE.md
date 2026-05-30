@@ -121,6 +121,7 @@ Auth (required for web app):
 
 Optional:
 - `S3_ENDPOINT_URL` — Set to `http://localhost:4566` for LocalStack
+- `RIDERS_FILE` — S3 object key for the exported riders list (default: `riders.json`); must match the generator's `RIDERS_FILE` and the frontend's `VITE_RIDERS_LIST_PATH`
 - `SCRAPER_MAX_CONCURRENT` — Number of concurrent requests (default: 20)
 - `SCRAPER_REQUEST_DELAY` — Delay between requests in seconds (default: 0.1)
 

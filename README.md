@@ -39,7 +39,7 @@ Runs in four phases:
 1. **Scrape** — Paginate UCI, collect profile URLs, scrape rider details concurrently
 2. **Upsert** — SCD2: hash-detect changes, close old rows, insert new; bump `scraped_at` if unchanged
 3. **Export** — Query merged view (`riders_current`) to JSON
-4. **Upload** — Push JSON to S3 as `uci_riders.json`
+4. **Upload** — Push JSON to S3 as `riders.json` (override the object key with `RIDERS_FILE`)
 
 ### Database
 
